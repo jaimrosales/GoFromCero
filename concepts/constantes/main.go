@@ -9,6 +9,15 @@ const ( // una buena practica es generar una seccion de constantes donde anides 
 	hermano, hermanito, hermana = "ricardo", "Emiliano", "hannia"
 )
 
+const ( // lo que se esta usando es el indentificador iota para definir las variables dentro de un bloque de constantes
+	Jan = iota + 1 //iota siempre valdra 0 por lo que al sumarle 1 el primer valor agregado sera 1
+	Feb            //2
+	Mar            //3
+	Apr            //4
+	May
+	jun // todas las constantes tomaran un calor como si usaras un for para asignarles numeracion
+)
+
 func main() {
 	const os string = "Linux" // Se declara con la palabra const, seguida del nombre el tipo y es necesario que se le asigne un valor, no se puede aseignar despues
 	//	os = "linux" no permitira la asignacion
@@ -17,6 +26,8 @@ func main() {
 
 	const place = "ixtlan del rio" //no se puede usar el operador de variable corta, sin embargo se puede inferir el tipo al remover el tipo de dato
 
-	fmt.Println(os, domain, engineer, place, love, siblings, hermano, hermanito, hermana)
+	fmt.Println(os, domain, engineer, place, love, siblings, hermano, hermanito, hermana, May)
 
 }
+
+//las constantes no necesitan ser usadas para compilar un programa
