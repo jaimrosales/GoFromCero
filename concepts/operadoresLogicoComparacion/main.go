@@ -16,5 +16,6 @@ func main() {
 
 	//operadores logico unario: !
 	// es el operador de negacion
-	fmt.Println(!(4 == 4))
+	fmt.Println(!(4 == 4)) //ejemplo ramdom
+	fmt.Println(age)
 }
