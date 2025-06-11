@@ -38,18 +38,19 @@ type file struct {
 	mode             string
 }
 
-//en la siguiente escritura se coontendra el estilos de renderizado
+//en la siguiente escritura se coontendra el estilos de renderizado, PROPIEDADES DE CADA ESTILO
 type styleFileType struct {
-	incon  string
+	icon   string
 	color  string
 	symbol string
 }
 
+//en el siguiente mapa se define cad uno de los estilos haciendolos de styleFileType
 var mapStylesByFileType = map[int]styleFileType{
-	fileRegular:    {},
-	fileDirectory:  {},
-	fileExecutable: {},
-	fileCompress:   {},
-	fileImage:      {},
-	fileLink:       {},
+	fileRegular:    {icon: "📄"},
+	fileDirectory:  {icon: "📂", color: "BLUE", symbol: "/"},
+	fileExecutable: {icon: "🚀", color: "GREEN", symbol: "*"},
+	fileCompress:   {icon: "📦", color: "RED"},
+	fileImage:      {icon: "📷", color: "MAGENTA"},
+	fileLink:       {icon: "🔗", color: "CIAN"},
 }
