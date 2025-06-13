@@ -5,11 +5,29 @@ import "fmt"
 //las funciones tambien son tipos de datos lo que permite usarlas como parametors o retornos de funcion
 
 func main() {
+
+	//FUNCIONES COMO PARAMETROS
 	nums := []int{2, 12, 23, 98, 21, 79}                           //slice de numeros aleatorios
-	result := filter(nums, func(num int) bool { return num > 10 }) //se manda a llamar la funcion filter con callback como argumento con el filtro deseado
+	result := filter(nums, func(num int) bool { return num > 40 }) //se manda a llamar la funcion filter con callback como argumento con el filtro deseado
 	fmt.Println(result)
+
+	//FUNCIONES COMO RETORNO DE FUNCIONES
+	// se vuelven a llamar los parentesis cada vez que se quieran mandar los parametros de las funciones a retornar
+	resultado := sum(2)(3)
+	fmt.Println(resultado)
+
+	//otro ejemplo podria ser
+	plus10 := sum(10)      //donde plus10 se usa como una especie de memoria cache, aqui vale 10
+	fmt.Println(plus10(2)) //aqui vale 12
+	fmt.Println(plus10(4)) //aqui se vera 14 en la terminal
+	fmt.Println(plus10(1)) //aqui se vera 11 en la terminal
+	fmt.Println(plus10(5)) //aqui se vera 15 en la terminal
+
+	// esta es otra manera de reutilizar funciones
+
 }
 
+//FUNCIONES COMO PARAMETROS
 //funcion como parametro de otra funcion, replicando la funcion filter de javascript
 //la funcion filter recivira como argumento el slice de numeros y una funcion llamada callback
 
@@ -36,7 +54,20 @@ func filter(nums []int, callback func(int) bool) []int {
 			result = append(result, num)
 		}
 	}
-
 	return result
+}
+
+//FUNCIONES COMO RETORNO DE FUNCIONES
+// se crea la funcion suma la cual solo recivira un elemento "a" de tipo entero y retornara una funcion con argumento entero que returnara un entero
+// en la parte del retorno de la funcion sum se desarrolla la funcion a desarrollar en este caso, la funcion tendra un argumento "b" tipo enteron y retornara un enterp
+//esta funcion de retorno a su vez retornara la sumatoria de a mas b
+
+// este tipo de casos funciona para reutilizar logica
+
+func sum(a int) func(int) int {
+
+	return func(b int) int {
+		return a + b
+	}
 
 }
