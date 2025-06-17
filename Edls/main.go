@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"runtime"
+	"strings"
 )
 
 func main() {
@@ -52,8 +54,44 @@ func main() {
 	fmt.Println("flagNumberRecords: ", *flagNumberRecords)
 
 }
+
+// en la siguiente funcion recive un directorio, y un bool, y apoyandose del paquete dir, y la funcion info, obtiene los datos de la direccion(archivo)que
+// se le ingresa, se llena el struct de file, la clase del archivo en poo
 func getFile(dir fs.DirEntry, isHidden bool) (file, error) {
+	info, err := dir.Info()
+	if err != nil {
+		return file{}, fmt.Errorf("dir.Info(): %v", err)
+	}
+	f := file{ //se llena la variable f con todos los datos que tiene cada archivo file con los datos de la dir, usando los paquetes dir e info
+		name:             dir.Name(),
+		isDir:            dir.IsDir(),
+		isHidden:         isHidden,
+		userName:         "jaimrosales", //se recivira del paquete final
+		groupname:        "RStech",      //se recivira del paquete final
+		size:             info.Size(),
+		modificationTime: info.ModTime(),
+		mode:             info.Mode().String(), // hace referencia a los permisos que tiene el usuario, ademas de si es un directorio o un link
+	}
+	setFile(&f) //se llama a la funcion set file y se le da acceso, con el operador de direccion a la direccion f, para que pueda modificar la struct de f
 
-	return file{}, nil
+	return f, nil //se retuorna el archivo con todas sus propiedades
+}
 
+// la siguiente funcion agrega a la structura file, el tipo de archivo del directorio evaluado
+func setFile(f *file) {
+
+}
+
+//funciones auxiliares a setFile
+
+func isLink(f file) bool { //esta funcion evalua si el archivo a evaluar es un enlace
+	//se verifica el modo del archivo evaluando el primer elemento del mismo, si es igual a L es un enlace,
+	return strings.HasPrefix(strings.ToUpper(f.mode), "L") //esta funcion de strings permite verificar el prefijo(con que comienza) del strings que se le pasa, se convierte en mayuscula para que no haya diferencia por versiones
+
+}
+func isExec(f file) bool {
+	if runtime.GOOS == Windows { //compara si el sistema operativo es windows, runtime.GOOS regresa el sistema operativo
+		return strings.HasSuffix(f.name, exe) //compara si la extension del archivo el sufijo, es .exe para mandar el boleano
+	}
+	return strings.Contains(f.mode, "x") ///con contains verifica si el string contiene el string especificado
 }
