@@ -2,6 +2,9 @@ package main
 
 import "time"
 
+//la siguiente constante servira para indicar si es de sistemas operativos windows
+const Windows = "Windows"
+
 //files types
 const ( //constantes a utilizar en el edls
 	fileRegular int = iota

@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -37,8 +38,8 @@ func main() {
 		panic(err)
 	}
 
-	fs := []file{} //este slice es donde se guardaran todos los archivos dentro de la direccion que se mostraran al llamarse la funcion edls
-	for _, dir := range dirs {
+	fs := []file{}             //este slice es donde se guardaran todos los archivos dentro de la direccion que se mostraran al llamarse la funcion edls
+	for _, dir := range dirs { //Se itera por cada uno de los archivos dentro del directorio para guardarlos en fs
 		f, err := getFile(dir, false)
 		if err != nil { //se controla el error por medio de un panico
 			panic(err)
@@ -49,10 +50,18 @@ func main() {
 	}
 
 	fmt.Println(fs)
+	printList(fs)
 	fmt.Println("patron de filtro ", *flagPattern)
 	fmt.Println("all", *flagAll)
 	fmt.Println("flagNumberRecords: ", *flagNumberRecords)
 
+}
+
+func printList(fs []file) { // esta funcion se encargara de imprimir cada estructura dentro del slice y utilisando la funcion print format se le dara formato a la impresion
+	for _, file := range fs {
+		fmt.Printf("%s  %s  %s  %10d  %s \n", file.mode, file.userName, file.groupname, file.size, file.modificationTime.Format(time.DateTime)) // dentro del verbo, entre % y la letra indicadora de tipo, si se pone un numero se indica el espacio que se quiere usar para el verbo para dar un sentido de columnas
+		// al file modification tiene muchos datos que no son realmente necesarios para la aplicacion, para no imprimir todo se usa la funcion format del paquete time y se le da el formato datetime
+	}
 }
 
 // en la siguiente funcion recive un directorio, y un bool, y apoyandose del paquete dir, y la funcion info, obtiene los datos de la direccion(archivo)que
@@ -79,7 +88,21 @@ func getFile(dir fs.DirEntry, isHidden bool) (file, error) {
 
 // la siguiente funcion agrega a la structura file, el tipo de archivo del directorio evaluado
 func setFile(f *file) {
+	switch {
+	case isLink(*f):
+		f.fileType = fileLink
+	case f.isDir:
+		f.fileType = fileDirectory
+	case isExec(*f):
+		f.fileType = fileExecutable
+	case isCompress(*f):
+		f.fileType = fileCompress
+	case isImage(*f):
+		f.fileType = fileImage
+	default:
+		f.fileType = fileRegular
 
+	}
 }
 
 //funciones auxiliares a setFile
@@ -94,4 +117,17 @@ func isExec(f file) bool {
 		return strings.HasSuffix(f.name, exe) //compara si la extension del archivo el sufijo, es .exe para mandar el boleano
 	}
 	return strings.Contains(f.mode, "x") ///con contains verifica si el string contiene el string especificado
+}
+
+func isCompress(f file) bool { //compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es comprimido
+	return strings.HasSuffix(f.name, zip) ||
+		strings.HasSuffix(f.name, gz) || //archivos comprimidos de unix
+		strings.HasSuffix(f.name, rar) ||
+		strings.HasSuffix(f.name, deb) //archivos comprimidos de linux, ubuntu o debian
+}
+
+func isImage(f file) bool { //compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es un tipo imagen
+	return strings.HasSuffix(f.name, png) ||
+		strings.HasSuffix(f.name, jpg) ||
+		strings.HasSuffix(f.name, gif)
 }
