@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"regexp" //paquete de expresiones regulares
 	"runtime"
 	"strings"
 	"time"
@@ -44,26 +45,46 @@ func main() {
 		if err != nil { //se controla el error por medio de un panico
 			panic(err)
 		}
+		//antes de agregar el archivo a fs se filtra,
+		isMatched, err := regexp.MatchString("(?i)"+*flagPattern, f.name) // la funcion matchstring permite evaluar si la primera expresion se encuentra en la segunda, "(?i)" nos sirve para indicar que es insensible a mayus concatenado
+		if err != nil {
+			panic(err)
+		}
+		if !isMatched {
+			continue // continue, lo que hace es que saltara a la siguiente iteracion dentro del for, por lo que no llegara a la siguiente linea de codigo
+		}
 
-		fs = append(fs, f)
+		fs = append(fs, f) //slice de archivos a mostrar
 
 	}
 
-	fmt.Println(fs)
-	printList(fs)
+	//para filtrar cuantos registros se quieren imprimir, justo antes de imprimir se setea el flag
+	if *flagNumberRecords == 0 || *flagNumberRecords > len(fs) { //si el flag nunca se especifico o si se especifico un tamano mayor a la cantidad de registros dentro del directorio, el valor a mostrar sera la longitud de registros dentro del directorio
+		*flagNumberRecords = len(fs)
+		//Se pasa este valor a la funcion print list, para que tome en cuenta este valor como limite a iterar en la impresion
+	}
+
+	fmt.Println(fs)                   //imprime el slice de archivos
+	printList(fs, *flagNumberRecords) //Imprime el Slice de archivos con el formato deseado
+	//Flags
 	fmt.Println("patron de filtro ", *flagPattern)
 	fmt.Println("all", *flagAll)
 	fmt.Println("flagNumberRecords: ", *flagNumberRecords)
 
 }
 
-func printList(fs []file) { // esta funcion se encargara de imprimir cada estructura dentro del slice y utilisando la funcion print format se le dara formato a la impresion
-	for _, file := range fs {
-		fmt.Printf("%s  %s  %s  %10d  %s \n", file.mode, file.userName, file.groupname, file.size, file.modificationTime.Format(time.DateTime)) // dentro del verbo, entre % y la letra indicadora de tipo, si se pone un numero se indica el espacio que se quiere usar para el verbo para dar un sentido de columnas
+// La siguiente es la funcion de salida
+// esta funcion se encargara de imprimir cada estructura dentro del slice y utilisando la funcion print format se le dara formato a la impresion
+func printList(fs []file, nRecords int) { //recive el slices de archivos y la cantidad de iteraciones deseadas
+	for _, file := range fs[0:nRecords] { // dentro de file guardara cada valor fs desde su posicion 0 hasta la cantidad especificada de registros deseados
+		style := mapStylesByFileType[file.fileType] // se manda a llamar el mapa donde se tienen los datos de icono, color y simbolo, relacionados con cada tipo de archivo, recordando que cada tipo de archivo tiene un int asignado, y se le asigna a style
+
+		fmt.Printf("%s  %s  %s  %10d  %s  %s %s %s \n", file.mode, file.userName, file.groupname, file.size, file.modificationTime.Format(time.DateTime), style.icon, file.name, style.symbol) // dentro del verbo, entre % y la letra indicadora de tipo, si se pone un numero se indica el espacio que se quiere usar para el verbo para dar un sentido de columnas
 		// al file modification tiene muchos datos que no son realmente necesarios para la aplicacion, para no imprimir todo se usa la funcion format del paquete time y se le da el formato datetime
 	}
 }
 
+// La siguiente funcion es para la organizacion y artructuracion de las archivos dentro del directorio
 // en la siguiente funcion recive un directorio, y un bool, y apoyandose del paquete dir, y la funcion info, obtiene los datos de la direccion(archivo)que
 // se le ingresa, se llena el struct de file, la clase del archivo en poo
 func getFile(dir fs.DirEntry, isHidden bool) (file, error) {
