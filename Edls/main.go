@@ -13,6 +13,7 @@ import (
 	"os"
 	"regexp" //paquete de expresiones regulares
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 )
@@ -25,8 +26,8 @@ func main() {
 	flagNumberRecords := flag.Int("n", 0, "number of archivos")        // indica el numero maximo de archivos que se desean revisar en el filtrado
 
 	//order flags  		flags que permitiran organizar la salida
-	//hasOrderbytime := flag.Bool("t", false, "sort by time, oldest first")
-	//hasOrderbySize := flag.Bool("s", false, "sort by file size, smallest first")
+	hasOrderbytime := flag.Bool("t", false, "sort by time, oldest first")
+	hasOrderbySize := flag.Bool("s", false, "sort by file size, smallest first")
 	//hasOrderReverse := flag.Bool("r", false, "reverse order while sorting")
 
 	flag.Parse()        //un flag es con el que podremos meter comandos -h o --h esta parte nos permite ver mas que la direccion de memoria
@@ -68,6 +69,10 @@ func main() {
 
 	}
 
+	if !*hasOrderbySize || !*hasOrderbytime {
+		orderByName(fs)
+	}
+
 	//para filtrar cuantos registros se quieren imprimir, justo antes de imprimir se setea el flag
 	if *flagNumberRecords == 0 || *flagNumberRecords > len(fs) { //si el flag nunca se especifico o si se especifico un tamano mayor a la cantidad de registros dentro del directorio, el valor a mostrar sera la longitud de registros dentro del directorio
 		*flagNumberRecords = len(fs)
@@ -85,9 +90,16 @@ func main() {
 
 }
 
+func orderByName(files []file) {
+	sort.SliceStable(files, func(i int, j int) bool {
+		return strings.ToLower(files[i].name) < strings.ToLower(files[j].name)
+	})
+}
+
 // La siguiente es la funcion de salida
 // esta funcion se encargara de imprimir cada estructura dentro del slice y utilisando la funcion print format se le dara formato a la impresion
-func printList(fs []file, nRecords int) { //recive el slices de archivos y la cantidad de iteraciones deseadas
+// recive el slices de archivos y la cantidad de iteraciones deseadas
+func printList(fs []file, nRecords int) {
 	for _, file := range fs[0:nRecords] { // dentro de file guardara cada valor fs desde su posicion 0 hasta la cantidad especificada de registros deseados
 		style := mapStylesByFileType[file.fileType] // se manda a llamar el mapa donde se tienen los datos de icono, color y simbolo, relacionados con cada tipo de archivo, recordando que cada tipo de archivo tiene un int asignado, y se le asigna a style
 
