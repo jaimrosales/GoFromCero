@@ -39,19 +39,29 @@ func main() {
 		panic(err)
 	}
 
-	fs := []file{}             //este slice es donde se guardaran todos los archivos dentro de la direccion que se mostraran al llamarse la funcion edls
-	for _, dir := range dirs { //Se itera por cada uno de los archivos dentro del directorio para guardarlos en fs
-		f, err := getFile(dir, false)
+	fs := []file{} //este slice es donde se guardaran todos los archivos dentro de la direccion que se mostraran al llamarse la funcion edls
+	//Se itera por cada uno de los archivos dentro del directorio para guardarlos en fs
+	for _, dir := range dirs {
+		isHidden := isHidden(dir.Name(), path)
+
+		if isHidden && !*flagAll {
+			continue
+		}
+
+		//antes de agregar el archivo a fs se filtra, y se filtrara solo cuando se escriba algo para filtrar
+		if *flagPattern != "" {
+			isMatched, err := regexp.MatchString("(?i)"+*flagPattern, dir.Name()) // la funcion matchstring permite evaluar si la primera expresion se encuentra en la segunda, "(?i)" nos sirve para indicar que es insensible a mayus concatenado
+			if err != nil {
+				panic(err)
+			}
+			if !isMatched {
+				continue // continue, lo que hace es que saltara a la siguiente iteracion dentro del for, por lo que no llegara a la siguiente linea de codigo
+			}
+		}
+
+		f, err := getFile(dir, isHidden)
 		if err != nil { //se controla el error por medio de un panico
 			panic(err)
-		}
-		//antes de agregar el archivo a fs se filtra,
-		isMatched, err := regexp.MatchString("(?i)"+*flagPattern, f.name) // la funcion matchstring permite evaluar si la primera expresion se encuentra en la segunda, "(?i)" nos sirve para indicar que es insensible a mayus concatenado
-		if err != nil {
-			panic(err)
-		}
-		if !isMatched {
-			continue // continue, lo que hace es que saltara a la siguiente iteracion dentro del for, por lo que no llegara a la siguiente linea de codigo
 		}
 
 		fs = append(fs, f) //slice de archivos a mostrar
@@ -63,6 +73,8 @@ func main() {
 		*flagNumberRecords = len(fs)
 		//Se pasa este valor a la funcion print list, para que tome en cuenta este valor como limite a iterar en la impresion
 	}
+
+	//IMPRESIONES
 
 	fmt.Println(fs)                   //imprime el slice de archivos
 	printList(fs, *flagNumberRecords) //Imprime el Slice de archivos con el formato deseado
@@ -126,13 +138,14 @@ func setFile(f *file) {
 	}
 }
 
-//funciones auxiliares a setFile
-
-func isLink(f file) bool { //esta funcion evalua si el archivo a evaluar es un enlace
+// funciones auxiliares a setFile
+// esta funcion evalua si el archivo a evaluar es un enlace
+func isLink(f file) bool {
 	//se verifica el modo del archivo evaluando el primer elemento del mismo, si es igual a L es un enlace,
 	return strings.HasPrefix(strings.ToUpper(f.mode), "L") //esta funcion de strings permite verificar el prefijo(con que comienza) del strings que se le pasa, se convierte en mayuscula para que no haya diferencia por versiones
 
 }
+
 func isExec(f file) bool {
 	if runtime.GOOS == Windows { //compara si el sistema operativo es windows, runtime.GOOS regresa el sistema operativo
 		return strings.HasSuffix(f.name, exe) //compara si la extension del archivo el sufijo, es .exe para mandar el boleano
@@ -140,15 +153,21 @@ func isExec(f file) bool {
 	return strings.Contains(f.mode, "x") ///con contains verifica si el string contiene el string especificado
 }
 
-func isCompress(f file) bool { //compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es comprimido
+// compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es comprimido
+func isCompress(f file) bool {
 	return strings.HasSuffix(f.name, zip) ||
 		strings.HasSuffix(f.name, gz) || //archivos comprimidos de unix
 		strings.HasSuffix(f.name, rar) ||
 		strings.HasSuffix(f.name, deb) //archivos comprimidos de linux, ubuntu o debian
 }
 
-func isImage(f file) bool { //compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es un tipo imagen
+// compara si el sufijo del nombre del archivo para identificar que tipo de archivo es y si es un tipo imagen
+func isImage(f file) bool {
 	return strings.HasSuffix(f.name, png) ||
 		strings.HasSuffix(f.name, jpg) ||
 		strings.HasSuffix(f.name, gif)
+}
+
+func isHidden(fileName, basePath string) bool {
+	return strings.HasPrefix(fileName, ".")
 }
