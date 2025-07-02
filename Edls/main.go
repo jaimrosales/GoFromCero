@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"golang.org/x/exp/constraints"
 )
 
 func main() {
@@ -28,7 +30,7 @@ func main() {
 	//order flags  		flags que permitiran organizar la salida
 	hasOrderbytime := flag.Bool("t", false, "sort by time, oldest first")
 	hasOrderbySize := flag.Bool("s", false, "sort by file size, smallest first")
-	//hasOrderReverse := flag.Bool("r", false, "reverse order while sorting")
+	hasOrderReverse := flag.Bool("r", false, "reverse order while sorting")
 
 	flag.Parse()        //un flag es con el que podremos meter comandos -h o --h esta parte nos permite ver mas que la direccion de memoria
 	path := flag.Arg(0) // flag.arg nos regresa ela rgumento que se ah ingresa, en este programa se le asigna el string a la variable path, nos regresara el primer argumento la ruta
@@ -69,8 +71,18 @@ func main() {
 
 	}
 
+	//ordenamiento alfabetico, default
 	if !*hasOrderbySize || !*hasOrderbytime {
-		orderByName(fs)
+		orderByName(fs, *hasOrderReverse)
+	}
+
+	//Solo se podra ordenar por tamano en caso de que no se ordene por fecha
+	if *hasOrderbySize && !*hasOrderbytime {
+		orderBySize(fs, *hasOrderReverse)
+	}
+	//Solo se podra ordenar por fecha en caso de que no se ordene por tamano
+	if *hasOrderbytime && !*hasOrderbySize {
+		orderByTime(fs, *hasOrderReverse)
 	}
 
 	//para filtrar cuantos registros se quieren imprimir, justo antes de imprimir se setea el flag
@@ -81,7 +93,7 @@ func main() {
 
 	//IMPRESIONES
 
-	fmt.Println(fs)                   //imprime el slice de archivos
+	//fmt.Println(fs)                   //imprime el slice de archivos
 	printList(fs, *flagNumberRecords) //Imprime el Slice de archivos con el formato deseado
 	//Flags
 	fmt.Println("patron de filtro ", *flagPattern)
@@ -90,9 +102,39 @@ func main() {
 
 }
 
-func orderByName(files []file) {
+func mySort[T constraints.Ordered](i, j T, isReverse bool) bool {
+	if isReverse {
+		return i > j
+	}
+	return i < j
+}
+
+func orderByName(files []file, isReverse bool) {
 	sort.SliceStable(files, func(i int, j int) bool {
-		return strings.ToLower(files[i].name) < strings.ToLower(files[j].name)
+		return mySort(
+			strings.ToLower(files[i].name),
+			strings.ToLower(files[j].name),
+			isReverse)
+
+	})
+}
+
+func orderBySize(files []file, isReverse bool) {
+	sort.SliceStable(files, func(i int, j int) bool {
+		return mySort(
+			files[i].size,
+			files[j].size,
+			isReverse)
+	})
+}
+
+func orderByTime(files []file, isReverse bool) {
+	sort.SliceStable(files, func(i int, j int) bool {
+		return mySort(
+			files[i].modificationTime.Unix(),
+			files[j].modificationTime.Unix(),
+			isReverse)
+
 	})
 }
 
