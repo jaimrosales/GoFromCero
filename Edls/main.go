@@ -11,12 +11,15 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"regexp" //paquete de expresiones regulares
 	"runtime"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/AJRDRGZ/fileinfo"
+	"github.com/fatih/color"
 	"golang.org/x/exp/constraints"
 )
 
@@ -145,7 +148,9 @@ func printList(fs []file, nRecords int) {
 	for _, file := range fs[0:nRecords] { // dentro de file guardara cada valor fs desde su posicion 0 hasta la cantidad especificada de registros deseados
 		style := mapStylesByFileType[file.fileType] // se manda a llamar el mapa donde se tienen los datos de icono, color y simbolo, relacionados con cada tipo de archivo, recordando que cada tipo de archivo tiene un int asignado, y se le asigna a style
 
-		fmt.Printf("%s  %s  %s  %10d  %s  %s %s %s \n", file.mode, file.userName, file.groupname, file.size, file.modificationTime.Format(time.DateTime), style.icon, file.name, style.symbol) // dentro del verbo, entre % y la letra indicadora de tipo, si se pone un numero se indica el espacio que se quiere usar para el verbo para dar un sentido de columnas
+		fmt.Printf("%s  %s  %s  %10d  %s  %s %s %s  %s \n", file.mode, file.userName, file.groupname,
+			file.size, file.modificationTime.Format(time.DateTime),
+			style.icon, setColor(file.name, style.color), style.symbol, markHidden(file.isHidden)) // dentro del verbo, entre % y la letra indicadora de tipo, si se pone un numero se indica el espacio que se quiere usar para el verbo para dar un sentido de columnas
 		// al file modification tiene muchos datos que no son realmente necesarios para la aplicacion, para no imprimir todo se usa la funcion format del paquete time y se le da el formato datetime
 	}
 }
@@ -158,12 +163,15 @@ func getFile(dir fs.DirEntry, isHidden bool) (file, error) {
 	if err != nil {
 		return file{}, fmt.Errorf("dir.Info(): %v", err)
 	}
+
+	userName, groupName := fileinfo.GetUserAndGroup(info.Sys())
+
 	f := file{ //se llena la variable f con todos los datos que tiene cada archivo file con los datos de la dir, usando los paquetes dir e info
 		name:             dir.Name(),
 		isDir:            dir.IsDir(),
 		isHidden:         isHidden,
-		userName:         "jaimrosales", //se recivira del paquete final
-		groupname:        "RStech",      //se recivira del paquete final
+		userName:         userName,  //se recivira del paquete final //el paquete fileinfo
+		groupname:        groupName, //se recivira del paquete final //el paquete fileinfo
 		size:             info.Size(),
 		modificationTime: info.ModTime(),
 		mode:             info.Mode().String(), // hace referencia a los permisos que tiene el usuario, ademas de si es un directorio o un link
@@ -193,6 +201,24 @@ func setFile(f *file) {
 }
 
 // funciones auxiliares a setFile
+
+// la siguiente funcion da color a los nombre de los archivos
+func setColor(nameFile string, styleColor color.Attribute) string {
+	switch styleColor {
+	case color.FgBlue:
+		return blue(nameFile)
+	case color.FgGreen:
+		return green(nameFile)
+	case color.FgRed:
+		return red(nameFile)
+	case color.FgMagenta:
+		return magenta(nameFile)
+	case color.FgCyan:
+		return cyan(nameFile)
+	}
+	return nameFile
+}
+
 // esta funcion evalua si el archivo a evaluar es un enlace
 func isLink(f file) bool {
 	//se verifica el modo del archivo evaluando el primer elemento del mismo, si es igual a L es un enlace,
@@ -223,5 +249,18 @@ func isImage(f file) bool {
 }
 
 func isHidden(fileName, basePath string) bool {
-	return strings.HasPrefix(fileName, ".")
+	filePath := fileName
+
+	if runtime.GOOS == Windows {
+		filePath = path.Join(basePath, fileName)
+	}
+
+	return fileinfo.IsHidden(filePath)
+}
+func markHidden(isHidden bool) string {
+	if !isHidden {
+		return ""
+	}
+
+	return yellow("ɸ")
 }

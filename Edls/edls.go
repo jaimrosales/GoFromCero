@@ -1,11 +1,15 @@
 package main
 
-import "time"
+import (
+	"time"
 
-//la siguiente constante servira para indicar si es de sistemas operativos windows
+	"github.com/fatih/color"
+)
+
+// la siguiente constante servira para indicar si es de sistemas operativos windows
 const Windows = "Windows"
 
-//files types
+// files types
 const ( //constantes a utilizar en el edls
 	fileRegular int = iota
 	fileDirectory
@@ -15,7 +19,7 @@ const ( //constantes a utilizar en el edls
 	fileLink
 )
 
-//file extension: constantes a utilizar en el edls
+// file extension: constantes a utilizar en el edls
 const (
 	exe = ".exe"
 	deb = ".deb"
@@ -28,7 +32,7 @@ const (
 	gif = ".gif"
 )
 
-//la siguiente estructura contendra los diferentes campos de un archivo necesarios para renderizar la informacion
+// la siguiente estructura contendra los diferentes campos de un archivo necesarios para renderizar la informacion
 type file struct {
 	name             string
 	fileType         int
@@ -41,19 +45,28 @@ type file struct {
 	mode             string
 }
 
-//en la siguiente escritura se coontendra el estilos de renderizado, PROPIEDADES DE CADA ESTILO
+// en la siguiente escritura se coontendra el estilos de renderizado, PROPIEDADES DE CADA ESTILO
 type styleFileType struct {
 	icon   string
-	color  string
+	color  color.Attribute
 	symbol string
 }
 
-//en el siguiente mapa se define cad uno de los estilos haciendolos de styleFileType
+// en el siguiente mapa se define cad uno de los estilos haciendolos de styleFileType
 var mapStylesByFileType = map[int]styleFileType{
 	fileRegular:    {icon: "📄"},
-	fileDirectory:  {icon: "📂", color: "BLUE", symbol: "/"},
-	fileExecutable: {icon: "🚀", color: "GREEN", symbol: "*"},
-	fileCompress:   {icon: "📦", color: "RED"},
-	fileImage:      {icon: "📷", color: "MAGENTA"},
-	fileLink:       {icon: "🔗", color: "CIAN"},
+	fileDirectory:  {icon: "📂", color: color.FgBlue, symbol: "/"},
+	fileExecutable: {icon: "🚀", color: color.FgGreen, symbol: "*"},
+	fileCompress:   {icon: "📦", color: color.FgRed},
+	fileImage:      {icon: "📷", color: color.FgMagenta},
+	fileLink:       {icon: "🔗", color: color.FgCyan},
 }
+
+var (
+	blue    = color.New(color.FgBlue).Add(color.Bold).SprintFunc()
+	green   = color.New(color.FgGreen).Add(color.Bold).SprintFunc()
+	red     = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+	magenta = color.New(color.FgMagenta).Add(color.Bold).SprintFunc()
+	cyan    = color.New(color.FgCyan).Add(color.Bold).SprintFunc()
+	yellow  = color.New(color.FgYellow).SprintFunc()
+)
